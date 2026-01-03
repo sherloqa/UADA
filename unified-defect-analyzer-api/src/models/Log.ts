@@ -183,7 +183,8 @@ const logSchema = new Schema<ILog>({
     // Metadata
     metadata: { type: Schema.Types.Mixed }
 }, {
-    timestamps: true // Automatically add createdAt and updatedAt
+    timestamps: true, // Automatically add createdAt and updatedAt
+    collection: 'logs' // Use the logs collection
 });
 
 // Compound indexes for common query patterns
