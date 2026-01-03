@@ -1,0 +1,331 @@
+{
+  "info": {
+    "name": "Unified Defect Analyzer API",
+    "description": "Phase 1: Log Upload & Storage API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Upload Single Log - UI Log",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"teamId\": \"team-123\",\n  \"testRunId\": \"run-456\",\n  \"failureId\": \"fail-789\",\n  \"level\": \"error\",\n  \"message\": \"Test failed: Login button not clickable\",\n  \"artifactType\": \"ui_log\",\n  \"artifactData\": {\n    \"screenshot\": \"base64_data_here\",\n    \"domSnapshot\": \"<html>...</html>\",\n    \"consoleErrors\": [\"Error: Element not found\"]\n  },\n  \"context\": {\n    \"testName\": \"Login Test\",\n    \"testSuite\": \"Authentication Suite\",\n    \"environment\": \"staging\",\n    \"browser\": \"Chrome 120\",\n    \"platform\": \"Windows 11\",\n    \"buildNumber\": \"1.2.3\",\n    \"commitHash\": \"abc123def456\"\n  },\n  \"metadata\": {\n    \"duration\": 5000,\n    \"retryCount\": 2\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/upload",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", "upload"]
+        }
+      }
+    },
+    {
+      "name": "Upload Single Log - HAR File",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"teamId\": \"payments-team\",\n  \"testRunId\": \"run-001\",\n  \"level\": \"error\",\n  \"message\": \"Payment API returned 500 error\",\n  \"artifactType\": \"har\",\n  \"artifactData\": {\n    \"log\": {\n      \"version\": \"1.2\",\n      \"creator\": {\n        \"name\": \"Test Automation\",\n        \"version\": \"1.0\"\n      },\n      \"entries\": [\n        {\n          \"request\": {\n            \"method\": \"POST\",\n            \"url\": \"https://api.example.com/payment\",\n            \"httpVersion\": \"HTTP/1.1\"\n          },\n          \"response\": {\n            \"status\": 500,\n            \"statusText\": \"Internal Server Error\"\n          }\n        }\n      ]\n    }\n  },\n  \"context\": {\n    \"testName\": \"Payment Processing\",\n    \"environment\": \"production\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/upload",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", "upload"]
+        }
+      }
+    },
+    {
+      "name": "Upload Bulk Logs",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"logs\": [\n    {\n      \"teamId\": \"team-123\",\n      \"level\": \"error\",\n      \"message\": \"API test failed\",\n      \"artifactType\": \"api_log\",\n      \"artifactData\": {\n        \"statusCode\": 404,\n        \"endpoint\": \"/api/users\"\n      }\n    },\n    {\n      \"teamId\": \"team-123\",\n      \"level\": \"error\",\n      \"message\": \"Backend error\",\n      \"artifactType\": \"backend_log\",\n      \"artifactData\": {\n        \"stackTrace\": \"Error at line 42...\"\n      }\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/upload/bulk",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", "upload", "bulk"]
+        }
+      }
+    },
+    {
+      "name": "Query Logs - All",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs?teamId=team-123&limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Query Logs - By Test Run",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs?teamId=team-123&testRunId=run-456",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            },
+            {
+              "key": "testRunId",
+              "value": "run-456"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Query Logs - By Artifact Type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs?teamId=team-123&artifactType=ui_log&level=error",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            },
+            {
+              "key": "artifactType",
+              "value": "ui_log"
+            },
+            {
+              "key": "level",
+              "value": "error"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Log by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/:logId?teamId=team-123",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", ":logId"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            }
+          ],
+          "variable": [
+            {
+              "key": "logId",
+              "value": "65f1a2b3c4d5e6f7a8b9c0d1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Logs by Test Run ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/testrun/:testRunId?teamId=team-123",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", "testrun", ":testRunId"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            }
+          ],
+          "variable": [
+            {
+              "key": "testRunId",
+              "value": "run-456"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Pending Logs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/pending?teamId=team-123&limit=50",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", "pending"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            },
+            {
+              "key": "limit",
+              "value": "50"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Processing Status",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"teamId\": \"team-123\",\n  \"status\": \"completed\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/:logId/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", ":logId", "status"],
+          "variable": [
+            {
+              "key": "logId",
+              "value": "65f1a2b3c4d5e6f7a8b9c0d1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Classification",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"teamId\": \"team-123\",\n  \"classification\": {\n    \"isDefect\": true,\n    \"defectType\": \"UI Bug\",\n    \"confidence\": \"high\",\n    \"severity\": \"high\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/:logId/classification",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", ":logId", "classification"],
+          "variable": [
+            {
+              "key": "logId",
+              "value": "65f1a2b3c4d5e6f7a8b9c0d1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/stats?teamId=team-123&days=7",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", "stats"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            },
+            {
+              "key": "days",
+              "value": "7"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Log",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/logs/:logId?teamId=team-123",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "logs", ":logId"],
+          "query": [
+            {
+              "key": "teamId",
+              "value": "team-123"
+            }
+          ],
+          "variable": [
+            {
+              "key": "logId",
+              "value": "65f1a2b3c4d5e6f7a8b9c0d1"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
