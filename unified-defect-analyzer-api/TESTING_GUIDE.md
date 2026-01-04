@@ -1,14 +1,511 @@
-# 🧪 Unified Defect Analyzer - Complete Testing Guide
+# 🧪 Unified Defect Analyzer - Testing Guide
 
-This guide covers all aspects of testing the Unified Defect Analyzer API and Phase 2 AI Agent Service.
+Complete guide for testing the Unified AI Defect Analyzer API.
 
-## Table of Contents
+---
 
-1. [Quick Start Testing](#quick-start-testing)
-2. [Seeding Database](#seeding-database)
-3. [Running Tests](#running-tests)
-4. [Integration Testing](#integration-testing)
-5. [Manual Testing](#manual-testing)
+## **Quick Start**
+
+### **1. Start the API Server**
+```bash
+npm run dev
+```
+
+Server runs at `http://localhost:3000`
+
+### **2. Upload a Log**
+```bash
+curl -X POST http://localhost:3000/api/logs/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "qa-team",
+    "level": "error",
+    "message": "Test error message",
+    "artifactType": "ui_log",
+    "artifactData": {"error": "details here"}
+  }'
+```
+
+### **3. Query Logs**
+```bash
+curl "http://localhost:3000/api/logs?teamId=qa-team&limit=5"
+```
+
+### **4. Start AI Agent**
+```bash
+curl -X POST http://localhost:3000/api/agent/start \
+  -H "Content-Type: application/json" \
+  -d '{"teamId":"qa-team"}'
+```
+
+### **5. Check Agent Status**
+```bash
+curl http://localhost:3000/api/agent/status
+```
+
+---
+
+## **API Endpoints**
+
+### **Logs Management**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `POST` | `/api/logs/upload` | Upload single log |
+| `POST` | `/api/logs/upload/bulk` | Bulk upload (max 100) |
+| `GET` | `/api/logs` | Query logs with filters |
+| `GET` | `/api/logs/{logId}` | Get specific log |
+| `GET` | `/api/logs/pending` | Get pending logs |
+| `GET` | `/api/logs/stats` | Get statistics |
+| `GET` | `/api/logs/testrun/{testRunId}` | Get logs by test run |
+| `PUT` | `/api/logs/{logId}/status` | Update processing status |
+| `PUT` | `/api/logs/{logId}/classification` | Update classification |
+| `DELETE` | `/api/logs/{logId}` | Delete log |
+
+### **Agent Management**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `POST` | `/api/agent/start` | Start AI agent |
+| `POST` | `/api/agent/stop` | Stop AI agent |
+| `GET` | `/api/agent/status` | Check agent status |
+| `GET` | `/api/agent/health` | Health check |
+| `POST` | `/api/agent/process-pending` | Manually process pending logs |
+| `PUT` | `/api/agent/config/poll-interval` | Set polling interval (ms) |
+| `PUT` | `/api/agent/config/rag-threshold` | Set RAG similarity threshold |
+| `PUT` | `/api/agent/config/vision-model` | Set vision model (openai/claude) |
+| `GET` | `/api/agent/stats/rag` | Get RAG statistics |
+| `GET` | `/api/agent/stats/classification` | Get classification statistics |
+
+### **Health Check**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET` | `/health` | API health check |
+
+---
+
+## **Complete Testing Workflow**
+
+### **Step 1: Verify API Health**
+```bash
+curl http://localhost:3000/health
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "message": "Unified Defect Analyzer API is running",
+  "timestamp": "2026-01-04T13:47:43.xxx"
+}
+```
+
+### **Step 2: Upload Test Logs**
+
+**Single log:**
+```bash
+curl -X POST http://localhost:3000/api/logs/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "qa-team",
+    "level": "error",
+    "message": "Login button not responding on mobile",
+    "artifactType": "ui_log",
+    "artifactData": {
+      "url": "https://app.example.com/login",
+      "error": "Button click not triggered",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0)"
+    }
+  }'
+```
+
+**Bulk upload:**
+```bash
+curl -X POST http://localhost:3000/api/logs/upload/bulk \
+  -H "Content-Type: application/json" \
+  -d '{
+    "teamId": "qa-team",
+    "logs": [
+      {
+        "level": "error",
+        "message": "API timeout",
+        "artifactType": "api_log",
+        "artifactData": {"endpoint": "/api/users", "statusCode": 500}
+      },
+      {
+        "level": "error",
+        "message": "Database connection failed",
+        "artifactType": "backend_log",
+        "artifactData": {"error": "Connection pool exhausted"}
+      }
+    ]
+  }'
+```
+
+### **Step 3: Check Agent Status**
+```bash
+curl http://localhost:3000/api/agent/status
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "data": {
+    "isRunning": false,
+    "pollInterval": 5000,
+    "startTime": null,
+    "processedLogsCount": 0
+  }
+}
+```
+
+### **Step 4: Start Agent**
+```bash
+curl -X POST http://localhost:3000/api/agent/start \
+  -H "Content-Type: application/json" \
+  -d '{"teamId":"qa-team"}'
+```
+
+Expected response:
+```json
+{
+  "success": true,
+  "message": "AI Agent started successfully",
+  "data": {
+    "status": {
+      "isRunning": true,
+      "pollInterval": 5000
+    }
+  }
+}
+```
+
+### **Step 5: Monitor Processing**
+
+Wait 10-15 seconds for the agent to process logs, then check:
+
+```bash
+curl "http://localhost:3000/api/logs?teamId=qa-team&limit=5"
+```
+
+Check processing status of logs:
+```bash
+curl "http://localhost:3000/api/logs?teamId=qa-team&status=completed&limit=3"
+```
+
+### **Step 6: Get Statistics**
+```bash
+curl "http://localhost:3000/api/agent/stats/classification?teamId=qa-team"
+```
+
+### **Step 7: Stop Agent**
+```bash
+curl -X POST http://localhost:3000/api/agent/stop
+```
+
+---
+
+## **Sample Data**
+
+The database is pre-seeded with sample data:
+
+### **Collections & Records**
+
+| Collection | Count | Purpose |
+|-----------|-------|---------|
+| `logs` | 8 | Sample log entries (errors, warnings) |
+| `defectsData` | 5 | Historical defect patterns with embeddings |
+| `testResults` | 5 | Test execution history with flakiness scores |
+
+### **Artifact Types Supported**
+
+```
+- ui_log
+- api_log
+- backend_log
+- screenshot
+- har
+- test_result
+- video
+- network_trace
+```
+
+### **Severity Levels**
+
+```
+- low
+- medium
+- high
+- critical
+```
+
+---
+
+## **Running Tests**
+
+### **Unit & Integration Tests**
+```bash
+# Run all tests
+npm test
+
+# Run in watch mode
+npm run test:watch
+
+# Run with coverage
+npm run test:coverage
+```
+
+### **Integration Test Script**
+```bash
+./test-integration.sh
+```
+
+### **Agent Test Script**
+```bash
+./test-agent.sh
+```
+
+---
+
+## **Database Setup**
+
+### **MongoDB Connection**
+
+**Connection String (from .env):**
+```
+mongodb+srv://dbUser:hackathon123@cluster0.7i92sqy.mongodb.net/unified-defect-analyzer?appName=Cluster0
+```
+
+**Database Name:** `unified-defect-analyzer`
+
+### **View Data in MongoDB**
+
+```bash
+# Connect to MongoDB
+mongosh "$MONGODB_URI"
+
+# View logs
+db.logs.find().limit(5)
+
+# View defects
+db.defectsData.find().limit(5)
+
+# View test results
+db.testResults.find().limit(5)
+
+# Count documents
+db.logs.countDocuments()
+db.defectsData.countDocuments()
+db.testResults.countDocuments()
+```
+
+### **Seed Database**
+
+Re-seed with sample data:
+```bash
+./seed-mongodb.sh
+```
+
+---
+
+## **Configuration**
+
+### **Environment Variables (.env)**
+
+```env
+MONGODB_URI=mongodb+srv://dbUser:hackathon123@cluster0.7i92sqy.mongodb.net/unified-defect-analyzer?appName=Cluster0
+PORT=3000
+NODE_ENV=development
+LOG_LEVEL=info
+```
+
+### **Agent Configuration**
+
+**Set polling interval (milliseconds):**
+```bash
+curl -X PUT http://localhost:3000/api/agent/config/poll-interval \
+  -H "Content-Type: application/json" \
+  -d '{"interval": 5000}'
+```
+
+**Set RAG similarity threshold (0-1):**
+```bash
+curl -X PUT http://localhost:3000/api/agent/config/rag-threshold \
+  -H "Content-Type: application/json" \
+  -d '{"threshold": 0.7}'
+```
+
+**Set vision model provider:**
+```bash
+curl -X PUT http://localhost:3000/api/agent/config/vision-model \
+  -H "Content-Type: application/json" \
+  -d '{"provider": "openai"}'
+```
+
+---
+
+## **Log Processing Pipeline**
+
+1. **Upload** → Log is stored in `logs` collection with `processingStatus: 'pending'`
+2. **Agent Polls** → Agent checks for pending logs every 5 seconds
+3. **Analysis** → Log is analyzed based on artifact type
+4. **RAG Retrieval** → Context retrieved from historical defects and test executions
+5. **Classification** → Defect is classified (type, severity, confidence)
+6. **Update** → Log is updated with classification and `processingStatus: 'completed'`
+
+---
+
+## **Expected Log Structure**
+
+```json
+{
+  "teamId": "qa-team",
+  "level": "error",
+  "message": "Test failed",
+  "artifactType": "ui_log",
+  "artifactData": {
+    "url": "https://app.example.com",
+    "error": "Element not found"
+  },
+  "processingStatus": "pending|processing|completed|failed",
+  "classification": {
+    "isDefect": true,
+    "defectType": "ui_bug",
+    "severity": "high",
+    "confidence": "high",
+    "rootCauseAnalysis": "...",
+    "recommendations": ["..."]
+  },
+  "createdAt": "2026-01-04T13:47:43.xxx",
+  "updatedAt": "2026-01-04T13:47:43.xxx"
+}
+```
+
+---
+
+## **Troubleshooting**
+
+### **API Not Responding**
+```bash
+# Check if server is running
+ps aux | grep "npm run dev"
+
+# Start server
+npm run dev
+
+# Verify health
+curl http://localhost:3000/health
+```
+
+### **Logs Failing to Process**
+- Check agent status: `curl http://localhost:3000/api/agent/status`
+- Check server logs: `tail -100 /tmp/server.log`
+- Verify MongoDB connection: Check `.env` file
+- Check log details: `curl http://localhost:3000/api/logs/{logId}`
+
+### **Agent Not Starting**
+- Verify no other agent is running: `curl http://localhost:3000/api/agent/status`
+- Check agent polling interval: Should be >= 1000ms
+- Review server logs for errors
+
+### **Database Connection Issues**
+- Verify MongoDB URI in `.env`
+- Check network connectivity to MongoDB Atlas
+- Confirm database `unified-defect-analyzer` exists
+
+---
+
+## **Build & Deployment**
+
+### **Build**
+```bash
+npm run build
+```
+
+### **Start Production**
+```bash
+npm start
+```
+
+### **Linting**
+```bash
+npm run lint
+```
+
+---
+
+## **Project Structure**
+
+```
+src/
+├── app.ts                 # Express app setup
+├── server.ts              # Server bootstrap
+├── config/
+│   └── db.ts              # MongoDB connection
+├── controllers/
+│   ├── logsController.ts  # Log endpoints
+│   └── agentController.ts # Agent endpoints
+├── models/
+│   ├── Log.ts             # Log schema
+│   ├── HistoricDefect.ts  # Defects schema
+│   └── TestExecution.ts   # Tests schema
+├── services/
+│   ├── logsService.ts     # Log business logic
+│   ├── aiAgentService.ts  # Agent logic
+│   ├── ragService.ts      # RAG retrieval
+│   └── classificationService.ts # Defect classification
+├── routes/
+│   ├── logs.ts            # Log routes
+│   └── agent.ts           # Agent routes
+├── middleware/
+│   ├── validateRequest.ts # Validation
+│   └── errorHandler.ts    # Error handling
+├── validators/
+│   └── logValidator.ts    # Input validators
+├── types/
+│   └── index.ts           # Type definitions
+└── utils/
+    └── logger.ts          # Logging utility
+
+tests/
+├── setup.ts               # Test configuration
+└── logs/
+    ├── logs.test.ts       # Log controller tests
+    └── logsService.test.ts # Service layer tests
+```
+
+---
+
+## **Key Features**
+
+✅ **Multi-artifact support** - HAR, screenshots, logs, videos, etc.
+✅ **Multi-tenant isolation** - Separate data per team  
+✅ **RAG-powered analysis** - Retrieval-augmented generation for context
+✅ **AI classification** - Automatic defect categorization  
+✅ **Vector embeddings** - 384-dimensional semantic embeddings  
+✅ **Flakiness detection** - Identifies flaky test patterns  
+✅ **Background processing** - Non-blocking log analysis  
+✅ **REST API** - 18+ endpoints for full functionality  
+✅ **MongoDB Atlas** - Cloud-hosted database  
+✅ **TypeScript** - Full type safety  
+
+---
+
+## **Support**
+
+For issues or questions:
+1. Check server logs: `tail -100 /tmp/server.log`
+2. Verify API health: `curl http://localhost:3000/health`
+3. Review MongoDB connection: `mongosh "$MONGODB_URI"`
+4. Check agent status: `curl http://localhost:3000/api/agent/status`
+
+---
+
+**Last Updated:** January 4, 2026  
+**API Version:** 1.0.0  
+**Status:** ✅ Operational
 6. [Troubleshooting](#troubleshooting)
 
 ---

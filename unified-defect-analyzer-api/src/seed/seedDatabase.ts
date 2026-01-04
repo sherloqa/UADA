@@ -322,7 +322,13 @@ const sampleLogs = [
  */
 async function connectDatabase() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/unified-defect-analyzer';
+    if (!process.env.MONGODB_URI) {
+      logError('MONGODB_URI environment variable is not set');
+      logError('Please set MONGODB_URI in your .env file');
+      process.exit(1);
+    }
+
+    const mongoUri = process.env.MONGODB_URI;
 
     await mongoose.connect(mongoUri);
     logInfo('Connected to MongoDB');

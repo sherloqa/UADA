@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 🗄️ Direct MongoDB Seeding - No Prerequisites
-# Use this if MongoDB is already running
+# 🗄️ Enhanced MongoDB Seeding - 100+ Records
+# Seeds MongoDB with comprehensive defect and test execution data
 # Reads MONGODB_URI from .env file
 
 # Load environment variables from .env
@@ -9,10 +9,14 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
 
-MONGODB_URI="${MONGODB_URI:-mongodb://localhost:27017/unified-defect-analyzer}"
+if [ -z "$MONGODB_URI" ]; then
+    echo "❌ ERROR: MONGODB_URI environment variable is not set"
+    echo "Please set MONGODB_URI in your .env file"
+    exit 1
+fi
 
 echo "════════════════════════════════════════════════════════════"
-echo "📊 Seeding MongoDB with Sample Data"
+echo "📊 Seeding MongoDB with 100+ Sample Defects & Tests"
 echo "════════════════════════════════════════════════════════════"
 echo "Connection: $MONGODB_URI"
 echo ""
@@ -22,11 +26,11 @@ mongosh "$MONGODB_URI" << 'MONGO_SCRIPT'
 // 1. Clear existing data
 console.log("🧹 Clearing existing collections...");
 db.logs.deleteMany({});
-db.historic_defects.deleteMany({});
-db.test_executions.deleteMany({});
+db.defectsData.deleteMany({});
+db.testResults.deleteMany({});
 
-// 2. Create sample logs
-console.log("📝 Creating sample logs...");
+// 2. Create sample logs (8 records)
+console.log("📝 Creating sample logs (8)...");
 const sampleLogs = [
   {
     teamId: "qa-team",
@@ -51,7 +55,7 @@ const sampleLogs = [
       endpoint: "/api/users",
       method: "GET",
       statusCode: 500,
-      errorMessage: "Unhandled exception in validation middleware"
+      errorMessage: "Unhandled exception"
     },
     processingStatus: "pending",
     createdAt: new Date(),
@@ -64,8 +68,7 @@ const sampleLogs = [
     artifactType: "backend_log",
     artifactData: {
       error: "Connection pool exhausted",
-      poolSize: 10,
-      activeConnections: 12
+      poolSize: 10
     },
     processingStatus: "pending",
     createdAt: new Date(),
@@ -74,7 +77,7 @@ const sampleLogs = [
   {
     teamId: "qa-team",
     level: "error",
-    message: "Network timeout on slow 3G connection",
+    message: "Network timeout on 3G connection",
     artifactType: "ui_log",
     artifactData: {
       networkType: "3g",
@@ -88,12 +91,11 @@ const sampleLogs = [
   {
     teamId: "api-team",
     level: "error",
-    message: "Memory leak detected in WebSocket handler",
+    message: "Memory leak in WebSocket",
     artifactType: "backend_log",
     artifactData: {
-      memoryUsage: "1.2GB",
-      threshold: "500MB",
-      component: "WebSocket"
+      component: "WebSocket",
+      memoryUsage: "1.2GB"
     },
     processingStatus: "pending",
     createdAt: new Date(),
@@ -102,12 +104,11 @@ const sampleLogs = [
   {
     teamId: "qa-team",
     level: "warn",
-    message: "Flaky test: test_login_with_valid_credentials",
+    message: "Flaky test detected",
     artifactType: "backend_log",
     artifactData: {
-      testName: "test_login_with_valid_credentials",
-      failureRate: "5/10",
-      consecutive: 3
+      testName: "test_login",
+      failureRate: "5/10"
     },
     processingStatus: "pending",
     createdAt: new Date(),
@@ -130,13 +131,11 @@ const sampleLogs = [
   {
     teamId: "backend-team",
     level: "error",
-    message: "Batch job timeout after 30 seconds",
+    message: "Batch job timeout",
     artifactType: "backend_log",
     artifactData: {
       jobName: "data_sync",
-      timeout: 30000,
-      processed: 5000,
-      remaining: 95000
+      timeout: 30000
     },
     processingStatus: "pending",
     createdAt: new Date(),
@@ -147,366 +146,174 @@ const sampleLogs = [
 const logResult = db.logs.insertMany(sampleLogs);
 console.log(`✅ Inserted ${logResult.insertedIds.length} logs`);
 
-// 3. Create historic defects with embeddings
-console.log("📚 Creating historic defects...");
-const historicDefects = [
-  {
-    teamId: "qa-team",
-    defectId: "DEF-001",
-    title: "Login Button Not Responding on Mobile",
-    description: "The login button becomes unresponsive on iOS Safari when session expires",
-    rootCause: "Race condition in session management causing stale DOM references",
-    resolution: "Updated event listener binding order and added session refresh check",
-    defectType: "ui_bug",
-    severity: "high",
-    component: "Authentication",
-    firstDiscovered: new Date("2024-01-15"),
-    lastOccurred: new Date("2024-03-20"),
-    occurrenceCount: 23,
-    affectedVersions: ["1.2.0", "1.2.1", "1.3.0"],
-    titleEmbedding: Array(384).fill(Math.random()),
-    descriptionEmbedding: Array(384).fill(Math.random()),
-    rootCauseEmbedding: Array(384).fill(Math.random()),
-    environment: "production",
-    status: "resolved",
-    resolutionDate: new Date("2024-03-22"),
-    jiraTicket: "JIRA-1234",
-    tags: ["mobile", "authentication", "race-condition"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "api-team",
-    defectId: "DEF-002",
-    title: "500 Internal Server Error on /api/users Endpoint",
-    description: "Intermittent 500 errors on the /api/users GET endpoint during high load",
-    rootCause: "Unhandled exception in user validation middleware when cache misses occur",
-    resolution: "Added try-catch wrapping and implemented fallback cache strategy",
-    defectType: "api_error",
-    severity: "critical",
-    component: "User Service",
-    firstDiscovered: new Date("2024-02-01"),
-    lastOccurred: new Date("2024-03-10"),
-    occurrenceCount: 45,
-    affectedVersions: ["2.0.0", "2.0.1"],
-    titleEmbedding: Array(384).fill(Math.random()),
-    descriptionEmbedding: Array(384).fill(Math.random()),
-    rootCauseEmbedding: Array(384).fill(Math.random()),
-    environment: "production",
-    status: "resolved",
-    resolutionDate: new Date("2024-03-12"),
-    jiraTicket: "JIRA-2345",
-    tags: ["api", "performance", "cache"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "backend-team",
-    defectId: "DEF-003",
-    title: "Database Connection Timeout in Batch Jobs",
-    description: "Batch processing jobs timeout when database connection pool is exhausted",
-    rootCause: "Insufficient connection pool size for concurrent batch operations",
-    resolution: "Increased pool size from 10 to 30 and implemented queue management",
-    defectType: "backend_error",
-    severity: "high",
-    component: "Database Layer",
-    firstDiscovered: new Date("2024-01-20"),
-    lastOccurred: new Date("2024-03-15"),
-    occurrenceCount: 34,
-    affectedVersions: ["3.1.0", "3.1.1", "3.2.0"],
-    titleEmbedding: Array(384).fill(Math.random()),
-    descriptionEmbedding: Array(384).fill(Math.random()),
-    rootCauseEmbedding: Array(384).fill(Math.random()),
-    environment: "production",
-    status: "resolved",
-    resolutionDate: new Date("2024-03-18"),
-    jiraTicket: "JIRA-3456",
-    tags: ["database", "performance", "batch-processing"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "qa-team",
-    defectId: "DEF-004",
-    title: "Timeout Error During Heavy Network Load",
-    description: "API requests timeout when network bandwidth is limited",
-    rootCause: "Hardcoded timeout value of 5 seconds too short for 3G networks",
-    resolution: "Implemented dynamic timeout based on network condition detection",
-    defectType: "network_error",
-    severity: "medium",
-    component: "Network Layer",
-    firstDiscovered: new Date("2024-02-10"),
-    lastOccurred: new Date("2024-03-25"),
-    occurrenceCount: 56,
-    affectedVersions: ["1.4.0", "1.5.0"],
-    titleEmbedding: Array(384).fill(Math.random()),
-    descriptionEmbedding: Array(384).fill(Math.random()),
-    rootCauseEmbedding: Array(384).fill(Math.random()),
-    environment: "production",
-    status: "active",
-    tags: ["network", "timeout", "mobile"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "api-team",
-    defectId: "DEF-005",
-    title: "Memory Leak in WebSocket Handler",
-    description: "Memory usage grows unbounded in long-running WebSocket connections",
-    rootCause: "Event listeners not properly cleaned up on connection close",
-    resolution: "Added explicit cleanup in WebSocket close handler and added memory monitoring",
-    defectType: "backend_error",
-    severity: "critical",
-    component: "WebSocket Service",
-    firstDiscovered: new Date("2024-03-01"),
-    lastOccurred: new Date("2024-03-24"),
-    occurrenceCount: 12,
-    affectedVersions: ["2.1.0"],
-    titleEmbedding: Array(384).fill(Math.random()),
-    descriptionEmbedding: Array(384).fill(Math.random()),
-    rootCauseEmbedding: Array(384).fill(Math.random()),
-    status: "active",
-    tags: ["memory-leak", "websocket", "critical"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
+// 3. Create 100+ historic defects with embeddings
+console.log("📚 Creating 100+ historic defects...");
 
-const defectResult = db.historic_defects.insertMany(historicDefects);
+const defectTypes = ["ui_bug", "api_error", "backend_error", "network_error", "performance", "flaky_test", "data_issue", "security_issue"];
+const components = ["Authentication", "User Service", "Database Layer", "WebSocket Service", "Cache Layer", "API Gateway", "Search", "Payment", "Notification", "Admin Panel", "Mobile App", "Desktop App", "iOS", "Android"];
+const severities = ["low", "medium", "high", "critical"];
+const teams = ["qa-team", "api-team", "backend-team", "frontend-team", "devops-team"];
+const statuses = ["active", "resolved", "obsolete"];
+
+const generateEmbedding = () => {
+  const arr = [];
+  for (let i = 0; i < 384; i++) {
+    arr.push(Math.random());
+  }
+  return arr;
+};
+
+const historicDefects = [];
+for (let i = 1; i <= 105; i++) {
+  const defectType = defectTypes[Math.floor(Math.random() * defectTypes.length)];
+  const component = components[Math.floor(Math.random() * components.length)];
+  const severity = severities[Math.floor(Math.random() * severities.length)];
+  const team = teams[Math.floor(Math.random() * teams.length)];
+  const status = statuses[Math.floor(Math.random() * statuses.length)];
+  
+  historicDefects.push({
+    teamId: team,
+    defectId: `DEF-${String(i).padStart(3, '0')}`,
+    title: `${defectType.toUpperCase()} in ${component} - Issue #${i}`,
+    description: `Detailed description of ${defectType} found in ${component} component. This defect was identified during testing and reported on various platforms.`,
+    rootCause: `Root cause analysis for defect #${i}: Investigation revealed ${['race condition', 'memory leak', 'improper error handling', 'missing validation', 'timeout misconfiguration', 'cache invalidation issue', 'concurrency problem'][Math.floor(Math.random() * 7)]}.`,
+    resolution: `Applied fix: ${['refactored code logic', 'added synchronization', 'implemented caching', 'increased timeout', 'added retry logic', 'improved error handling', 'optimized query'][Math.floor(Math.random() * 7)]}.`,
+    defectType: defectType,
+    severity: severity,
+    component: component,
+    firstDiscovered: new Date(2024, Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1),
+    lastOccurred: new Date(2026, 0, Math.floor(Math.random() * 4) + 1),
+    occurrenceCount: Math.floor(Math.random() * 100) + 1,
+    affectedVersions: [`${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 10)}.0`],
+    titleEmbedding: generateEmbedding(),
+    descriptionEmbedding: generateEmbedding(),
+    rootCauseEmbedding: generateEmbedding(),
+    environment: ['dev', 'staging', 'production'][Math.floor(Math.random() * 3)],
+    status: status,
+    resolutionDate: status === 'active' ? null : new Date(2025, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+    jiraTicket: `JIRA-${1000 + i}`,
+    tags: [defectType, component.toLowerCase().replace(' ', '-'), severity],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+}
+
+const defectResult = db.defectsData.insertMany(historicDefects);
 console.log(`✅ Inserted ${defectResult.insertedIds.length} historic defects`);
 
-// 4. Create test executions with embeddings
-console.log("🧪 Creating test executions...");
-const testExecutions = [
-  {
-    teamId: "qa-team",
-    executionId: "TEST-001",
-    testName: "test_login_with_valid_credentials",
-    testSuite: "Authentication",
-    testFile: "tests/auth.test.ts",
-    description: "Validates successful login with correct email and password",
-    status: "failed",
-    duration: 3500,
-    timestamp: new Date(),
-    failureMessage: "Timeout waiting for login button response",
-    failureReason: "Button click not triggering login process",
-    environment: "staging",
-    browser: "Chrome",
-    platform: "macOS",
-    buildNumber: "build-1234",
-    consecutiveFailures: 3,
-    totalExecutions: 50,
-    passRate: 94,
-    flakinessScore: 35,
-    testNameEmbedding: Array(384).fill(Math.random()),
-    failureMessageEmbedding: Array(384).fill(Math.random()),
-    defectType: "ui_bug",
-    flakiness: {
-      isFlaky: true,
-      flakySince: new Date("2024-03-10"),
-      possibleCauses: ["Network latency", "DOM synchronization issue"]
-    },
-    relatedHistoricDefectIds: ["DEF-001"],
-    jiraTicket: "JIRA-1234",
-    tags: ["authentication", "flaky", "ui"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "api-team",
-    executionId: "TEST-002",
-    testName: "test_get_users_with_pagination",
-    testSuite: "User API",
-    testFile: "tests/api/users.test.ts",
-    description: "Tests paginated retrieval of users from API",
-    status: "failed",
-    duration: 5200,
-    timestamp: new Date(),
-    failureMessage: "500 Internal Server Error from /api/users endpoint",
-    failureReason: "Cache miss in validation middleware",
-    environment: "staging",
-    browser: "API Client",
-    platform: "Linux",
-    buildNumber: "build-5678",
-    consecutiveFailures: 2,
-    totalExecutions: 120,
-    passRate: 98.3,
-    flakinessScore: 22,
-    testNameEmbedding: Array(384).fill(Math.random()),
-    failureMessageEmbedding: Array(384).fill(Math.random()),
-    defectType: "api_error",
-    flakiness: {
-      isFlaky: true,
-      flakySince: new Date("2024-02-28"),
-      possibleCauses: ["Cache misconfiguration", "Timing issue"]
-    },
-    relatedHistoricDefectIds: ["DEF-002"],
-    jiraTicket: "JIRA-2345",
-    tags: ["api", "users", "pagination"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "backend-team",
-    executionId: "TEST-003",
-    testName: "test_batch_job_completion",
-    testSuite: "Batch Processing",
-    testFile: "tests/batch.test.ts",
-    description: "Tests successful completion of batch processing job",
-    status: "failed",
-    duration: 8500,
-    timestamp: new Date(),
-    failureMessage: "Database connection timeout after 30 seconds",
-    failureReason: "Connection pool exhaustion during peak load",
-    environment: "staging",
-    browser: "N/A",
-    platform: "Linux",
-    buildNumber: "build-9012",
-    consecutiveFailures: 1,
-    totalExecutions: 30,
-    passRate: 96.7,
-    flakinessScore: 45,
-    testNameEmbedding: Array(384).fill(Math.random()),
-    failureMessageEmbedding: Array(384).fill(Math.random()),
-    defectType: "backend_error",
-    flakiness: {
-      isFlaky: true,
-      flakySince: new Date("2024-03-01"),
-      possibleCauses: ["Connection pool size", "Load timing"]
-    },
-    relatedHistoricDefectIds: ["DEF-003"],
-    jiraTicket: "JIRA-3456",
-    tags: ["batch", "database", "backend"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "qa-team",
-    executionId: "TEST-004",
-    testName: "test_network_resilience",
-    testSuite: "Network",
-    testFile: "tests/network.test.ts",
-    description: "Tests API resilience on slow networks",
-    status: "flaky",
-    duration: 12000,
-    timestamp: new Date(),
-    failureMessage: "Request timeout on 3G network simulation",
-    failureReason: "Fixed timeout too short for slow networks",
-    environment: "staging",
-    browser: "Mobile Simulator",
-    platform: "iOS",
-    buildNumber: "build-3456",
-    consecutiveFailures: 5,
-    totalExecutions: 40,
-    passRate: 87.5,
-    flakinessScore: 72,
-    testNameEmbedding: Array(384).fill(Math.random()),
-    failureMessageEmbedding: Array(384).fill(Math.random()),
-    defectType: "network_error",
-    flakiness: {
-      isFlaky: true,
-      flakySince: new Date("2024-02-10"),
-      possibleCauses: ["Fixed timeout value", "Network simulation variance"]
-    },
-    relatedHistoricDefectIds: ["DEF-004"],
-    tags: ["network", "mobile", "timeout"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    teamId: "api-team",
-    executionId: "TEST-005",
-    testName: "test_websocket_long_connection",
-    testSuite: "WebSocket",
-    testFile: "tests/websocket.test.ts",
-    description: "Tests WebSocket connection stability over long duration",
-    status: "failed",
-    duration: 45000,
-    timestamp: new Date(),
-    failureMessage: "Memory usage exceeded threshold after 40 seconds",
-    failureReason: "Event listener accumulation in WebSocket handler",
-    environment: "staging",
-    browser: "Node.js",
-    platform: "Linux",
-    buildNumber: "build-7890",
-    consecutiveFailures: 8,
-    totalExecutions: 25,
-    passRate: 68,
-    flakinessScore: 92,
-    testNameEmbedding: Array(384).fill(Math.random()),
-    failureMessageEmbedding: Array(384).fill(Math.random()),
-    defectType: "backend_error",
-    flakiness: {
-      isFlaky: true,
-      flakySince: new Date("2024-03-01"),
-      possibleCauses: ["Memory leak in handler", "Event listener cleanup"]
-    },
-    relatedHistoricDefectIds: ["DEF-005"],
-    jiraTicket: "JIRA-5678",
-    tags: ["websocket", "memory", "critical"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
+// 4. Create 100+ test executions with embeddings
+console.log("🧪 Creating 100+ test executions...");
 
-const testResult = db.test_executions.insertMany(testExecutions);
+const testSuites = ["Authentication", "User API", "Batch Processing", "Payment", "Search", "Notifications", "Admin", "Mobile UI", "Performance", "Security"];
+const testStatuses = ["passed", "failed", "skipped", "flaky"];
+const browsers = ["Chrome", "Firefox", "Safari", "Edge", "API Client"];
+const platforms = ["Windows", "macOS", "Linux", "iOS", "Android"];
+
+const testExecutions = [];
+for (let i = 1; i <= 105; i++) {
+  const testStatus = testStatuses[Math.floor(Math.random() * testStatuses.length)];
+  const testSuite = testSuites[Math.floor(Math.random() * testSuites.length)];
+  const browser = browsers[Math.floor(Math.random() * browsers.length)];
+  const platform = platforms[Math.floor(Math.random() * platforms.length)];
+  const passCount = Math.floor(Math.random() * 200) + 1;
+  const passRate = Math.floor((passCount / (passCount + Math.floor(Math.random() * 50))) * 100);
+  const flakinessScore = testStatus === 'flaky' ? Math.floor(Math.random() * 100) : 0;
+  
+  testExecutions.push({
+    teamId: teams[Math.floor(Math.random() * teams.length)],
+    executionId: `TEST-${String(i).padStart(3, '0')}`,
+    testName: `test_${testSuite.toLowerCase().replace(/ /g, '_')}_${i}`,
+    testSuite: testSuite,
+    testFile: `tests/${testSuite.toLowerCase().replace(/ /g, '_')}.test.ts`,
+    description: `Test case #${i} for ${testSuite} functionality`,
+    status: testStatus,
+    duration: Math.floor(Math.random() * 10000) + 1000,
+    timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+    failureMessage: testStatus === 'failed' ? `Test assertion failed: Expected value to match` : null,
+    failureReason: testStatus === 'failed' ? `${['assertion failure', 'timeout', 'exception', 'memory error', 'network issue'][Math.floor(Math.random() * 5)]}` : null,
+    environment: ['dev', 'staging', 'production'][Math.floor(Math.random() * 3)],
+    browser: browser,
+    platform: platform,
+    buildNumber: `build-${5000 + i}`,
+    consecutiveFailures: testStatus === 'failed' ? Math.floor(Math.random() * 10) + 1 : 0,
+    totalExecutions: passCount + Math.floor(Math.random() * 50),
+    passRate: passRate,
+    flakinessScore: flakinessScore,
+    testNameEmbedding: generateEmbedding(),
+    failureMessageEmbedding: testStatus === 'failed' ? generateEmbedding() : null,
+    defectType: testStatus === 'failed' ? defectTypes[Math.floor(Math.random() * defectTypes.length)] : null,
+    flakiness: {
+      isFlaky: testStatus === 'flaky' || flakinessScore > 30,
+      flakySince: testStatus === 'flaky' ? new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1) : null,
+      possibleCauses: [['Network latency', 'DOM synchronization'], ['Timing issue', 'Race condition'], ['Cache inconsistency', 'External service'], ['Resource contention', 'Test isolation']][Math.floor(Math.random() * 4)]
+    },
+    relatedHistoricDefectIds: [`DEF-${String(Math.floor(Math.random() * 105) + 1).padStart(3, '0')}`],
+    jiraTicket: `JIRA-${2000 + i}`,
+    tags: [testStatus, testSuite.toLowerCase().replace(/ /g, '-')],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+}
+
+const testResult = db.testResults.insertMany(testExecutions);
 console.log(`✅ Inserted ${testResult.insertedIds.length} test executions`);
 
-// 5. Create indexes for optimal query performance
-console.log("📑 Creating database indexes...");
+// 5. Create indexes for better query performance
+console.log("🔍 Creating database indexes...");
 
-// Logs collection indexes
+// Logs indexes
 db.logs.createIndex({ teamId: 1, createdAt: -1 });
 db.logs.createIndex({ processingStatus: 1 });
-db.logs.createIndex({ message: "text", artifactType: 1 });
-db.logs.createIndex({ teamId: 1, artifactType: 1 });
+db.logs.createIndex({ message: "text" });
 
-// Historic defects collection indexes
-db.historic_defects.createIndex({ teamId: 1, status: 1 });
-db.historic_defects.createIndex({ defectType: 1, severity: 1 });
-db.historic_defects.createIndex({ lastOccurred: -1 });
-db.historic_defects.createIndex({ occurrenceCount: -1 });
+// DefectsData indexes
+db.defectsData.createIndex({ teamId: 1, status: 1 });
+db.defectsData.createIndex({ defectType: 1, severity: 1 });
+db.defectsData.createIndex({ lastOccurred: -1 });
+db.defectsData.createIndex({ component: 1 });
+db.defectsData.createIndex({ environment: 1 });
 
-// Test executions collection indexes
-db.test_executions.createIndex({ teamId: 1, timestamp: -1 });
-db.test_executions.createIndex({ flakinessScore: -1 });
-db.test_executions.createIndex({ testName: 1, status: 1 });
-db.test_executions.createIndex({ status: 1, flakinessScore: -1 });
+// TestResults indexes
+db.testResults.createIndex({ teamId: 1, timestamp: -1 });
+db.testResults.createIndex({ flakinessScore: -1 });
+db.testResults.createIndex({ testName: 1, status: 1 });
+db.testResults.createIndex({ status: 1 });
+db.testResults.createIndex({ environment: 1 });
 
-console.log("✅ Created database indexes");
+console.log("✅ Created performance indexes");
 
-// 6. Display summary
-console.log("\n════════════════════════════════════════════════");
-console.log("📊 MongoDB Seeding Complete!");
-console.log("════════════════════════════════════════════════");
-
+// 6. Summary
 const logCount = db.logs.countDocuments();
-const defectCount = db.historic_defects.countDocuments();
-const testCount = db.test_executions.countDocuments();
+const defectCount = db.defectsData.countDocuments();
+const testCount = db.testResults.countDocuments();
 
-console.log(`\n✅ Sample Logs: ${logCount}`);
+console.log("\n════════════════════════════════════════════════════════════");
+console.log("📊 Database Seeding Complete");
+console.log("════════════════════════════════════════════════════════════");
+console.log(`✅ Total Logs: ${logCount}`);
 console.log(`✅ Historic Defects: ${defectCount}`);
 console.log(`✅ Test Executions: ${testCount}`);
-
-console.log("\n📁 Collections:");
-console.log("  • logs");
-console.log("  • historic_defects");
-console.log("  • test_executions");
-
-console.log("\n🧪 Ready for testing!");
-console.log("════════════════════════════════════════════════\n");
+console.log(`✅ Total Records: ${logCount + defectCount + testCount}`);
+console.log("════════════════════════════════════════════════════════════\n");
 
 MONGO_SCRIPT
 
-echo ""
-echo "✅ MongoDB seeding complete!"
-echo ""
-echo "📊 Collections created:"
-echo "  • logs (8 sample entries)"
-echo "  • historic_defects (5 known defect patterns)"
-echo "  • test_executions (5 test execution records)"
-echo ""
-echo "Verify with:"
-echo "  mongosh unified-defect-analyzer"
-echo "  db.logs.countDocuments()"
-echo ""
+if [ $? -eq 0 ]; then
+    echo "✅ MongoDB seeding completed successfully!"
+    echo ""
+    echo "📊 Sample Data Summary:"
+    echo "  • Logs: 8 records"
+    echo "  • Historic Defects: 105 records"
+    echo "  • Test Executions: 105 records"
+    echo "  • Total: 218 records"
+    echo ""
+    echo "🎯 Collections:"
+    echo "  • logs"
+    echo "  • defectsData"
+    echo "  • testResults"
+    echo ""
+    echo "🧪 Ready for testing!"
+else
+    echo "❌ MongoDB seeding failed!"
+    exit 1
+fi

@@ -189,13 +189,14 @@ class ClassificationService {
    */
   private async assessFlakiness(log: any, ragContext: any): Promise<boolean> {
     try {
-      // Check RAG context for similar flaky issues
-      const flakyMatches = ragContext.similarIssues.filter(
+      // Check RAG context for similar flaky issues (handle both old and new RAG formats)
+      const similarIssues = ragContext?.similarIssues || ragContext?.similarLogs || [];
+      const flakyMatches = Array.isArray(similarIssues) ? similarIssues.filter(
         (issue: any) =>
-          issue.classification?.isFlaky || issue.classification?.defectType === 'flaky_test'
-      );
+          issue?.classification?.isFlaky || issue?.classification?.defectType === 'flaky_test'
+      ) : [];
 
-      const flakinessRate = flakyMatches.length / Math.max(ragContext.similarIssues.length, 1);
+      const flakinessRate = flakyMatches.length / Math.max(similarIssues.length || 1, 1);
 
       // If > 50% of similar issues are flaky, this likely is too
       if (flakinessRate > 0.5) {
@@ -293,11 +294,12 @@ class ClassificationService {
       causes.push(`Visual issue: ${analysis.visionAnalysis.suggestedDefectType}`);
     }
 
-    // Check if similar issues have known root causes
-    const similarWithCause = ragContext.similarIssues.filter(
+    // Check if similar issues have known root causes (handle both old and new RAG formats)
+    const similarIssues = ragContext?.similarIssues || ragContext?.similarLogs || [];
+    const similarWithCause = Array.isArray(similarIssues) ? similarIssues.filter(
       (issue: any) =>
-        issue.classification?.rootCauseAnalysis
-    );
+        issue?.classification?.rootCauseAnalysis
+    ) : [];
 
     if (similarWithCause.length > 0) {
       causes.push(
