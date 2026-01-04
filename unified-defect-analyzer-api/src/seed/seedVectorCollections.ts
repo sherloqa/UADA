@@ -16,9 +16,15 @@ import { logInfo, logError } from '../utils/logger';
 
 async function connectDatabase() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/unified-defect-analyzer';
+    if (!process.env.MONGODB_URI) {
+      logError('MONGODB_URI environment variable is not set');
+      logError('Please set MONGODB_URI in your .env file');
+      process.exit(1);
+    }
+
+    const mongoUri = process.env.MONGODB_URI;
     await mongoose.connect(mongoUri);
-    logInfo(`Connected to database: ${mongoUri}`);
+    logInfo(`Connected to database: ${mongoUri.split('@')[1]}`);
   } catch (error) {
     logError(`Database connection failed: ${error}`);
     throw error;

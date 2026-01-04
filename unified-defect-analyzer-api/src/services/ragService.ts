@@ -345,6 +345,11 @@ class RAGService {
     defects: any[],
     query: string
   ): Promise<HistoricDefectMatch[]> {
+    // Safety check for undefined or null
+    if (!defects || !Array.isArray(defects)) {
+      return [];
+    }
+
     const ranked = await Promise.all(
       defects.map(async defect => {
         // Use title as primary embedding source
@@ -375,6 +380,11 @@ class RAGService {
     tests: any[],
     query: string
   ): Promise<TestExecutionMatch[]> {
+    // Safety check for undefined or null
+    if (!tests || !Array.isArray(tests)) {
+      return [];
+    }
+
     const ranked = await Promise.all(
       tests.map(async test => {
         const testEmbedding = test.testNameEmbedding || 
@@ -440,14 +450,25 @@ class RAGService {
     logs: any[],
     query: string
   ): Promise<any[]> {
+    // Safety check for undefined or null
+    if (!logs || !Array.isArray(logs)) {
+      return [];
+    }
+
     const ranked = await Promise.all(
       logs.map(async log => {
-        const logEmbedding = await this.getEmbedding(log.message);
-        const similarity = this.cosineSimilarity(queryEmbedding, logEmbedding);
-        return {
-          ...log.toObject(),
-          similarity,
-        };
+        try {
+          const logObj = log.toObject ? log.toObject() : log;
+          const logEmbedding = await this.getEmbedding(log.message);
+          const similarity = this.cosineSimilarity(queryEmbedding, logEmbedding);
+          return {
+            ...logObj,
+            similarity,
+          };
+        } catch (e) {
+          logError(`Error ranking log: ${e}`);
+          return { similarity: 0 };
+        }
       })
     );
 

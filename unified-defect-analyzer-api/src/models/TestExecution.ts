@@ -185,7 +185,7 @@ const testExecutionSchema = new Schema<ITestExecution>(
   },
   {
     timestamps: true,
-    collection: 'test_executions',
+    collection: 'testResults',
   }
 );
 

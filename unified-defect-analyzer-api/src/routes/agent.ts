@@ -16,7 +16,7 @@ const router = Router();
 router.post(
   '/start',
   body('teamId').optional().isString(),
-  validateRequest,
+  validateRequest([body('teamId').optional().isString()]),
   (req: any, res: any) => agentController.startAgent(req, res)
 );
 
@@ -45,7 +45,7 @@ router.get('/health', (req, res) => agentController.health(req, res));
 router.post(
   '/process-pending',
   body('teamId').optional().isString(),
-  validateRequest,
+  validateRequest([body('teamId').optional().isString()]),
   (req: any, res: any) => agentController.processPending(req, res)
 );
 
@@ -62,7 +62,11 @@ router.put(
   body('interval')
     .isInt({ min: 1000, max: 3600000 })
     .withMessage('interval must be between 1000ms and 1 hour'),
-  validateRequest,
+  validateRequest([
+    body('interval')
+      .isInt({ min: 1000, max: 3600000 })
+      .withMessage('interval must be between 1000ms and 1 hour')
+  ]),
   (req: any, res: any) => agentController.setPollInterval(req, res)
 );
 
@@ -75,7 +79,11 @@ router.put(
   body('threshold')
     .isFloat({ min: 0, max: 1 })
     .withMessage('threshold must be between 0 and 1'),
-  validateRequest,
+  validateRequest([
+    body('threshold')
+      .isFloat({ min: 0, max: 1 })
+      .withMessage('threshold must be between 0 and 1')
+  ]),
   (req: any, res: any) => agentController.setRAGThreshold(req, res)
 );
 
@@ -88,7 +96,11 @@ router.put(
   body('provider')
     .isIn(['openai', 'claude'])
     .withMessage('provider must be either "openai" or "claude"'),
-  validateRequest,
+  validateRequest([
+    body('provider')
+      .isIn(['openai', 'claude'])
+      .withMessage('provider must be either "openai" or "claude"')
+  ]),
   (req: any, res: any) => agentController.setVisionModel(req, res)
 );
 
@@ -103,7 +115,7 @@ router.put(
 router.get(
   '/stats/rag',
   query('teamId').notEmpty().withMessage('teamId is required'),
-  validateRequest,
+  validateRequest([query('teamId').notEmpty().withMessage('teamId is required')]),
   (req: any, res: any) => agentController.getRAGStats(req, res)
 );
 
@@ -114,7 +126,7 @@ router.get(
 router.get(
   '/stats/classification',
   query('teamId').notEmpty().withMessage('teamId is required'),
-  validateRequest,
+  validateRequest([query('teamId').notEmpty().withMessage('teamId is required')]),
   (req: any, res: any) => agentController.getClassificationStats(req, res)
 );
 

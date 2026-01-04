@@ -42,3 +42,5 @@ verify-collection.ts
 inspect-testresults.ts
 test-upload.ts
 test-db-connection.ts
+
+.md

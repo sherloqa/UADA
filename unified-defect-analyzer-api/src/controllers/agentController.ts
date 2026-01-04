@@ -25,8 +25,11 @@ class AgentController {
         });
       }
 
-      // Start agent in background (don't wait)
-      aiAgentService.startAgent(teamId);
+      // Start agent in background without waiting for response
+      // This ensures the HTTP response returns immediately
+      aiAgentService.startAgent(teamId).catch((error: any) => {
+        logError(`Background agent error: ${error}`);
+      });
 
       logInfo(`Agent started for team: ${teamId || 'all teams'}`);
 

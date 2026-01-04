@@ -152,7 +152,7 @@ const historicDefectSchema = new Schema<IHistoricDefect>(
   },
   {
     timestamps: true,
-    collection: 'historic_defects',
+    collection: 'defectsData',
   }
 );
 

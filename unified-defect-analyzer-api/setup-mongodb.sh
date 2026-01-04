@@ -86,8 +86,8 @@ seed_data() {
 
 // Clear existing collections
 db.logs.deleteMany({});
-db.historic_defects.deleteMany({});
-db.test_executions.deleteMany({});
+db.defectsData.deleteMany({});
+db.testResults.deleteMany({});
 
 // Insert sample logs
 const sampleLogs = [
@@ -289,7 +289,7 @@ const historicDefects = [
   }
 ];
 
-const defectResult = db.historic_defects.insertMany(historicDefects);
+const defectResult = db.defectsData.insertMany(historicDefects);
 print(`✅ Inserted ${defectResult.insertedIds.length} historic defects`);
 
 // Insert test executions
@@ -390,7 +390,7 @@ const testExecutions = [
   }
 ];
 
-const testResult = db.test_executions.insertMany(testExecutions);
+const testResult = db.testResults.insertMany(testExecutions);
 print(`✅ Inserted ${testResult.insertedIds.length} test executions`);
 
 // Create indexes
@@ -398,20 +398,20 @@ db.logs.createIndex({ teamId: 1, createdAt: -1 });
 db.logs.createIndex({ processingStatus: 1 });
 db.logs.createIndex({ message: "text" });
 
-db.historic_defects.createIndex({ teamId: 1, status: 1 });
-db.historic_defects.createIndex({ defectType: 1, severity: 1 });
-db.historic_defects.createIndex({ lastOccurred: -1 });
+db.defectsData.createIndex({ teamId: 1, status: 1 });
+db.defectsData.createIndex({ defectType: 1, severity: 1 });
+db.defectsData.createIndex({ lastOccurred: -1 });
 
-db.test_executions.createIndex({ teamId: 1, timestamp: -1 });
-db.test_executions.createIndex({ flakinessScore: -1 });
-db.test_executions.createIndex({ testName: 1, status: 1 });
+db.testResults.createIndex({ teamId: 1, timestamp: -1 });
+db.testResults.createIndex({ flakinessScore: -1 });
+db.testResults.createIndex({ testName: 1, status: 1 });
 
 print("✅ Created database indexes");
 
 // Summary
 const logCount = db.logs.countDocuments();
-const defectCount = db.historic_defects.countDocuments();
-const testCount = db.test_executions.countDocuments();
+const defectCount = db.defectsData.countDocuments();
+const testCount = db.testResults.countDocuments();
 
 print("\n════════════════════════════════════");
 print("📊 Database Seeding Complete");
