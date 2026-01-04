@@ -1,5 +1,6 @@
 import express from 'express';
 import logRoutes from './routes/logs';
+import agentRoutes from './routes/agent';
 import { errorHandler } from './middleware/errorHandler';
 import connectDB from './config/db';
 
@@ -34,6 +35,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/logs', logRoutes);
+app.use('/api/agent', agentRoutes);
 
 // 404 handler
 app.use((req, res) => {
